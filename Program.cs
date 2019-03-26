@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace candy_market
 {
@@ -6,71 +7,50 @@ namespace candy_market
 	{
 		static void Main(string[] args)
 		{
-			var db = SetupNewApp();
+			// Creates a database context and customizes the console colors.
+			var app = new App();
+			var db = new Database();
 
 			var exit = false;
 			while (!exit)
 			{
-				var userInput = MainMenu();
-				exit = TakeActions(db, userInput);
+				// Display the main menu and return the user menu selection.
+				var menuOptions = new List<string>
+				{
+						"Did you just get some new candy? Add it here.",
+						"Do you want to eat a specific candy? Take it here.",
+						"Do you want to eat a random candy? Spin the wheel.",
+						"Would you like to trade with someone?"
+				};
+				var userInput = app.MainMenu(menuOptions);
+
+				if (userInput.Key == ConsoleKey.Escape)
+					break;
+				
+				var userSelection = int.Parse(userInput.KeyChar.ToString());
+				
+				// Takes an action based on the user menu selection.
+				// The action taken determines if "exit" changes to true.
+				exit = DoSomething(app, db, userSelection);
 			}
 		}
 
-		internal static CandyStorage SetupNewApp()
+		private static bool DoSomething(App app, Database db, int userSelection)
 		{
-			Console.Title = "Cross Confectioneries Incorporated";
-			Console.BackgroundColor = ConsoleColor.White;
-			Console.ForegroundColor = ConsoleColor.Black;
-
-			var db = new CandyStorage();
-
-			return db;
-		}
-
-		internal static ConsoleKeyInfo MainMenu()
-		{
-			View mainMenu = new View()
-					.AddMenuOption("Did you just get some new candy? Add it here.")
-					.AddMenuOption("Do you want to eat some candy? Take it here.")
-					.AddMenuText("Press Esc to exit.");
-			Console.Write(mainMenu.GetFullMenu());
-			var userOption = Console.ReadKey();
-			return userOption;
-		}
-
-		private static bool TakeActions(CandyStorage db, ConsoleKeyInfo userInput)
-		{
-			Console.Write(Environment.NewLine);
-
-			if (userInput.Key == ConsoleKey.Escape)
-				return true;
-
-			var selection = userInput.KeyChar.ToString();
-			switch (selection)
+			// there seems to be a bug in this switch statement. the app closes after every action.
+			switch (userSelection)
 			{
-				case "1": AddNewCandy(db);
+				case 1: app.AddNewCandy(db);
 					break;
-				case "2": EatCandy(db);
+				case 2: app.EatCandy(db);
 					break;
-				default: return true;
+				case 3: app.EatRandomCandy(db);
+					break;
+				case 4: app.TradeCandy(db);
+					break;
+				default: return false;
 			}
-			return true;
-		}
-
-		internal static void AddNewCandy(CandyStorage db)
-		{
-			var newCandy = new Candy
-			{
-				Name = "Whatchamacallit"
-			};
-
-			var savedCandy = db.SaveNewCandy(newCandy);
-			Console.WriteLine($"Now you own the candy {savedCandy.Name}");
-		}
-
-		private static void EatCandy(CandyStorage db)
-		{
-			throw new NotImplementedException();
+			return false;
 		}
 	}
 }
